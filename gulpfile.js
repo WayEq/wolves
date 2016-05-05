@@ -3,8 +3,11 @@ const babel = require('gulp-babel');
 const eslint = require('gulp-eslint');
 
 // Gulp dependencies go here
-
-gulp.task('default', function() {
+gulp.task('watch',function() {
+	gulp.watch(['./public/es6/*.js'],['build']);
+});
+gulp.task('default',['watch']);
+gulp.task('build', function() {
 
   // Run ESLint
   gulp.src(["es6/**/*.js", "public/es6/**/*.js"]).pipe(eslint()).pipe(eslint.format());

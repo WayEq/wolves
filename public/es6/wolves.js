@@ -1,10 +1,14 @@
-/*global paper Shape Point view*/
+/*global paper Shape Point Raster view*/
 /*eslint-env jquery, paper.js */
 'use strict';
 
-const startPopulation = 10;
-const startFood = 10;
-const foodSpawnPerTurn = 2; // per turn
+let startPopulation = 10;
+let startFood = 10;
+let foodSpawnPerTurn = 1; // per turn
+
+let wolfStartHealth = 100;
+let wolfMaxSpeed = 10;
+let wolfStartSize = 10;
 
 function dist(a,b) {
    return Math.abs(a.icon.position.x - b.icon.position.x) + Math.abs(a.icon.position.y - b.icon.position.y);
@@ -14,8 +18,8 @@ class Food {
    constructor() {
 
       //this.icon = Shape.Rectangle(600,300, 10,10);
-      this.icon = Shape.Rectangle(Math.floor(Math.random()*document.getElementById('mainCanvas').width),
-      Math.floor(Math.random()*document.getElementById('mainCanvas').height), 10,10);
+      this.icon = new Raster('rabbit.gif',Math.floor(Math.random()*document.getElementById('mainCanvas').width),
+      Math.floor(Math.random()*document.getElementById('mainCanvas').height));
       this.icon.fillColor = 'black';
    }
 }
@@ -23,17 +27,23 @@ class Food {
 let wolfId = 0;
 class Wolf {
    constructor() {
+      const startHealth = 100;
       this.id = wolfId++;
 
-      this.health = 10;
-      //this.icon = Shape.Circle(800,400, 10);
-      this.icon = Shape.Circle(Math.floor(Math.random()*document.getElementById('mainCanvas').width),
-                               Math.floor(Math.random()*document.getElementById('mainCanvas').height), 10);
-      this.icon.fillColor = 'green';
+      this.health = startHealth;
+      //if (wolfId === 6) {
+         this.icon = new Raster('wolf', Math.floor(Math.random()*document.getElementById('mainCanvas').width),
+                                  Math.floor(Math.random()*document.getElementById('mainCanvas').height));
+      // } else {
+      //    //this.icon = Shape.Circle(800,400, 10);
+      //    this.icon = Shape.Circle(Math.floor(Math.random()*document.getElementById('mainCanvas').width),
+      //                             Math.floor(Math.random()*document.getElementById('mainCanvas').height), 10);
+         this.icon.fillColor = 'green';
+      //}
       console.log('created wolf at: ' + this.icon.position);
    }
    getMoveDist() {
-      return 50 - this.health * 5;
+      return wolfMaxSpeed * (1 - (this.health / wolfStartHealth));
    }
    moveTowardFood(closestFood) {
 
@@ -59,11 +69,12 @@ class Wolf {
          //console.log('EATING');
          this.eatFood(closestFood);
       }
-      that.health--;
-      that.icon.radius = that.health * 3;
+      this.health--;
+      this.icon.radius = wolfStartSize *  (this.health/ wolfStartHealth);
       if (that.health == 0) {
-         that.icon.fillColor = 'red';
+         that.icon.rotate(180);
          wolves = wolves.filter(w => w.id !== that.id);
+         setTimeout(() => that.icon.remove(),500);
       }
 
       // return new Promise(function(resolve, reject) {
@@ -112,8 +123,8 @@ class Wolf {
    eatFood(closestFood) {
       food = food.filter(e => (! this.near(e.icon.position)));
       closestFood.icon.remove();
-      this.health = 10;
-      this.icon.radius = this.health * 3;
+      this.health = wolfStartHealth;
+      this.icon.radius = wolfStartSize;
    }
 }
 
@@ -125,39 +136,44 @@ function spawn(num,ctor) {
    return a;
 }
 
-function* runWolves() {
-   for (let i=0;i<wolves.length;i++) {
-      yield wolves[i].runTurn();
-   }
-}
-
-// function grun(g) {
-//    return new Promise(function(resolve, reject) {
-//
-//       const it = g();
-//       (function iterate(val) {
-//          const x = it.next(val);
-//          if(!x.done) {
-//             if(x.value instanceof Promise) {
-//                x.value.then(iterate).catch(err => it.throw(err));
-//             } else {
-//                setTimeout(iterate, 0, x.value);
-//             }
-//          } else {
-//             resolve();
-//          }
-//       })();
-//
-//    });
-// }
+let i=0;
 function runTurn() {
+
+   'use strict';
+
+   wolfStartHealth = $('#wolfStartHealth').val();
+   startPopulation =$('#startPopulation').val();
+   startFood = $('#startFood').val();
+   foodSpawnPerTurn = $('#foodSpawnPerTurn').val(); // per turn
+   wolfMaxSpeed = $('#wolfMaxSpeed').val();
+
+   console.log('wsh: ' + wolfStartHealth);
+   paper.install(window);
+   paper.setup(document.getElementById('mainCanvas'));
+   paper.view.draw();
+
+   food = spawn(startFood,Food);
+   wolves = spawn(startPopulation,Wolf);
+   let special = wolves[5];
+   special.getMoveDist = () => 10;
+   special.icon.fillColor = 'blue';
    //console.log('running');
-
-   for (let i=0;i<wolves.length;i++) {
-      wolves[i].runTurn();
-   }
-
-   spawn(foodSpawnPerTurn,Food).map(e => food.push(e));
+   view.onFrame = function(event) {
+      if (i++%5 !== 0) {
+         return;
+      }
+      if(i===5) {
+         i=0;
+      }
+      for (let i=0;i<wolves.length;i++) {
+         wolves[i].runTurn();
+      }
+      if (Math.random() < (.05 * foodSpawnPerTurn)) {
+         spawn(1,Food).map(e => food.push(e));
+      }
+      $('#numWolves').text(wolves.length);
+      $('#numFood').text(food.length);
+   };
    paper.view.draw();
    //runTurn();
    // grun(runWolves).then(function()  {
@@ -170,19 +186,3 @@ function runTurn() {
 
 let food;
 let wolves;
-$(document).ready(function () {
-   'use strict';
-
-   paper.install(window);
-   paper.setup(document.getElementById('mainCanvas'));
-   paper.view.draw();
-
-   food = spawn(startFood,Food);
-   wolves = spawn(startPopulation,Wolf);
-   let special = wolves[5];
-   special.getMoveDist = () => 100;
-   special.icon.fillColor = 'blue';
-
-   setInterval(runTurn,50);
-
-});
