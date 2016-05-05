@@ -32,14 +32,10 @@ class Wolf {
 
       this.health = startHealth;
       //if (wolfId === 6) {
-         this.icon = new Raster('wolf', Math.floor(Math.random()*document.getElementById('mainCanvas').width),
-                                  Math.floor(Math.random()*document.getElementById('mainCanvas').height));
-      // } else {
-      //    //this.icon = Shape.Circle(800,400, 10);
-      //    this.icon = Shape.Circle(Math.floor(Math.random()*document.getElementById('mainCanvas').width),
-      //                             Math.floor(Math.random()*document.getElementById('mainCanvas').height), 10);
-         this.icon.fillColor = 'green';
-      //}
+      let x =  Math.floor(Math.random()*document.getElementById('mainCanvas').width);
+      let y =  Math.floor(Math.random()*document.getElementById('mainCanvas').height);
+      console.log('x: ' + x + ' y: ' + y);
+      this.icon = new Raster('wolf',x,y);
       console.log('created wolf at: ' + this.icon.position);
    }
    getMoveDist() {
