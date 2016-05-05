@@ -1,3 +1,4 @@
+/*global paper Shape Point view*/
 /*eslint-env jquery, paper.js */
 'use strict';
 
@@ -52,31 +53,44 @@ class Wolf {
       //console.log('xmove: ' + xMove  + ' ymove: ' + yMove);
       let that = this;
       let target = new Point(that.icon.position.x+xMove,that.icon.position.y+yMove);
-      return new Promise(function(resolve, reject) {
-         view.onFrame = function(event) {
-            let pv = new Point(target.x - that.icon.position.x,target.y - that.icon.position.y);
+      this.icon.position.x = target.x;
+      this.icon.position.y = target.y;
+      if (this.near(closestFood.icon.position)) {
+         //console.log('EATING');
+         this.eatFood(closestFood);
+      }
+      that.health--;
+      that.icon.radius = that.health * 3;
+      if (that.health == 0) {
+         that.icon.fillColor = 'red';
+         wolves = wolves.filter(w => w.id !== that.id);
+      }
 
-            if (that.near(closestFood.icon.position)) {
-               //console.log('EATING');
-               that.eatFood(closestFood);
-            }
-            if (that.near(target)) {
-               that.health--;
-               that.icon.radius = that.health * 3;
-               if (that.health == 0) {
-                  that.icon.fillColor = 'red';
-                  wolves = wolves.filter(w => w.id !== that.id);
-               }
-               view.onFrame = null;
-               resolve();
-            }
-            that.icon.position.x  += pv.x / 2;
-            that.icon.position.y  += pv.y / 2;
-
-            //console.log('c: ' + that.icon.position + ' .');
-            paper.view.draw();
-         };
-      });
+      // return new Promise(function(resolve, reject) {
+      //    view.onFrame = function(event) {
+      //       let pv = new Point(target.x - that.icon.position.x,target.y - that.icon.position.y);
+      //
+      //       if (that.near(closestFood.icon.position)) {
+      //          //console.log('EATING');
+      //          that.eatFood(closestFood);
+      //       }
+      //       if (that.near(target)) {
+      //          that.health--;
+      //          that.icon.radius = that.health * 3;
+      //          if (that.health == 0) {
+      //             that.icon.fillColor = 'red';
+      //             wolves = wolves.filter(w => w.id !== that.id);
+      //          }
+      //          view.onFrame = null;
+      //          resolve();
+      //       }
+      //       that.icon.position.x  += pv.x / 2;
+      //       that.icon.position.y  += pv.y / 2;
+      //
+      //       //console.log('c: ' + that.icon.position + ' .');
+      //       paper.view.draw();
+      //    };
+      // });
    }
    runTurn() {
 
@@ -88,7 +102,7 @@ class Wolf {
       let closestFood = food.reduce((ret,a) =>
          dist(a,that) < dist(ret,that)? a : ret
       );
-      return this.moveTowardFood(closestFood);
+      this.moveTowardFood(closestFood);
 
    }
    near(point) {
@@ -117,33 +131,41 @@ function* runWolves() {
    }
 }
 
-function grun(g) {
-   return new Promise(function(resolve, reject) {
-
-      const it = g();
-      (function iterate(val) {
-         const x = it.next(val);
-         if(!x.done) {
-            if(x.value instanceof Promise) {
-               x.value.then(iterate).catch(err => it.throw(err));
-            } else {
-               setTimeout(iterate, 0, x.value);
-            }
-         } else {
-            resolve();
-         }
-      })();
-
-   });
-}
+// function grun(g) {
+//    return new Promise(function(resolve, reject) {
+//
+//       const it = g();
+//       (function iterate(val) {
+//          const x = it.next(val);
+//          if(!x.done) {
+//             if(x.value instanceof Promise) {
+//                x.value.then(iterate).catch(err => it.throw(err));
+//             } else {
+//                setTimeout(iterate, 0, x.value);
+//             }
+//          } else {
+//             resolve();
+//          }
+//       })();
+//
+//    });
+// }
 function runTurn() {
    //console.log('running');
-   grun(runWolves).then(function()  {
 
-      spawn(foodSpawnPerTurn,Food).map(e => food.push(e));
-      paper.view.draw();
-      runTurn();
-   });
+   for (let i=0;i<wolves.length;i++) {
+      wolves[i].runTurn();
+   }
+
+   spawn(foodSpawnPerTurn,Food).map(e => food.push(e));
+   paper.view.draw();
+   //runTurn();
+   // grun(runWolves).then(function()  {
+   //
+   //    spawn(foodSpawnPerTurn,Food).map(e => food.push(e));
+   //    paper.view.draw();
+   //    runTurn();
+   // });
 }
 
 let food;
@@ -158,8 +180,9 @@ $(document).ready(function () {
    food = spawn(startFood,Food);
    wolves = spawn(startPopulation,Wolf);
    let special = wolves[5];
-      special.getMoveDist = () => 100;
-      special.icon.fillColor = 'blue';
+   special.getMoveDist = () => 100;
+   special.icon.fillColor = 'blue';
 
+   setInterval(runTurn,50);
 
 });
