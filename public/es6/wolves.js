@@ -18,8 +18,8 @@ class Food {
    constructor() {
 
       //this.icon = Shape.Rectangle(600,300, 10,10);
-      this.icon = new Raster('rabbit.gif',Math.floor(Math.random()*document.getElementById('mainCanvas').width),
-      Math.floor(Math.random()*document.getElementById('mainCanvas').height));
+      this.icon = new Raster('rabbit.gif',Math.floor(Math.random()*document.getElementById('mainCanvas').scrollWidth),
+      Math.floor(Math.random()*document.getElementById('mainCanvas').scrollHeight));
       this.icon.fillColor = 'black';
    }
 }
@@ -32,8 +32,12 @@ class Wolf {
 
       this.health = startHealth;
       //if (wolfId === 6) {
-      let x =  Math.floor(Math.random()*document.getElementById('mainCanvas').width);
-      let y =  Math.floor(Math.random()*document.getElementById('mainCanvas').height);
+
+      console.log('canvas width: ' +document.getElementById('mainCanvas').scrollWidth);
+      console.log('canvas height: ' +document.getElementById('mainCanvas').scrollHeight);
+
+      let x =  Math.floor(Math.random()*document.getElementById('mainCanvas').scrollWidth);
+      let y =  Math.floor(Math.random()*document.getElementById('mainCanvas').scrollHeight);
       console.log('x: ' + x + ' y: ' + y);
       this.icon = new Raster('wolf',x,y);
       console.log('created wolf at: ' + this.icon.position);
