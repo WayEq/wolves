@@ -10,18 +10,23 @@
           </style>
    </head>
    <body>
-      Food: <div id="numFood" ></div>
+      Plants: <div id="numPlants" ></div>
       Wolves: <div id="numWolves"></div>
+      Rabbits: <div id="numRabbits"></div>
 
       <canvas height="600" width="1200" id="mainCanvas">
       <image id="wolf" src="wolf.png">
+      <image id="plant" src="plant.png">
       <image id="rabbit" src="rabbit.gif"></canvas>
       <br>
-      Start Health: <input type="text" id="wolfStartHealth" value="100"><br>
-      Start Population: <input type="text" id="startPopulation" value="10"><br>
-      Starting Food: <input type="text" id="startFood" value="10"><br>
-      Food Per Turn: <input type="text" id="foodSpawnPerTurn" value="1"><br>
+      Start Wolf Health: <input type="text" id="wolfStartHealth" value="100"><br>
+      Start Wolf Population: <input type="text" id="startWolfPopulation" value="10"><br>
+      Start Rabbit Health: <input type="text" id="rabbitStartHealth" value="100"><br>
+      Start Rabbit Population: <input type="text" id="startRabbitPopulation" value="10"><br>
+      Start Plant Population: <input type="text" id="startPlantPopulation" value="10"><br>
+      Plants Per Turn: <input type="text" id="plantSpawnPerTurn" value="1"><br>
       Wolf Max Speed: <input type="text" id="wolfMaxSpeed" value="5"><br>
+      Rabbit Max Speed: <input type="text" id="rabbitMaxSpeed" value="5"><br>
       <button id='runGeneration' onclick="runTurn()">Go!</button><br>
       <script src='dist/wolves.js' canvas='mainCanvas'></script>
    </body>

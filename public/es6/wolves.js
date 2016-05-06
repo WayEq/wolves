@@ -2,41 +2,36 @@
 /*eslint-env jquery, paper.js */
 'use strict';
 
-let startPopulation = 10;
-let startFood = 10;
-let foodSpawnPerTurn = 1; // per turn
 
-let wolfStartHealth = 1000;
-let wolfMaxSpeed = 3;
-let wolfStartSize = 10;
-
-let food;
-let wolves;
+let plants = [];
+let rabbits = [];
+let wolves = [];
 
 function dist(a,b) {
    return Math.abs(a.icon.position.x - b.icon.position.x) + Math.abs(a.icon.position.y - b.icon.position.y);
 }
 
-class Food {
+class Plant {
    constructor() {
 
-      this.icon = new Raster('rabbit.gif',Math.floor(Math.random()*document.getElementById('mainCanvas').scrollWidth),
+      this.icon = new Raster('plant.png',Math.floor(Math.random()*document.getElementById('mainCanvas').scrollWidth),
       Math.floor(Math.random()*document.getElementById('mainCanvas').scrollHeight));
       this.icon.fillColor = 'black';
    }
 }
-let wolfId = 0;
-class Wolf {
-   constructor() {
-      this.id = wolfId++;
+
+let animalId = 0;
+
+class Animal {
+   constructor(icon) {
+      this.id = animalId++;
       this.lastDirection = -1;
-      this.health = wolfStartHealth;
       let x =  Math.floor(Math.random()*document.getElementById('mainCanvas').scrollWidth);
       let y =  Math.floor(Math.random()*document.getElementById('mainCanvas').scrollHeight);
-      this.icon = new Raster('wolf',x,y);
+      this.icon = new Raster(icon,x,y);
    }
    getMoveDist() {
-      return wolfMaxSpeed * (1 - (this.health / wolfStartHealth));
+      return this.maxSpeed * (1 - (this.health / this.startHealth));
    }
    moveTowardFood(closestFood) {
       let vector = new Point(closestFood.icon.position.x - this.icon.position.x,
@@ -57,18 +52,17 @@ class Wolf {
       let yMove = this.getMoveDist() - Math.abs(xMove);
       yMove =  (vector.y < 0) ? yMove *= -1 : yMove;
       yMove = Math.abs(vector.y) - Math.abs(yMove) > 0 ? yMove : vector.y;
-      let that = this;
-      let target = new Point(that.icon.position.x+xMove,that.icon.position.y+yMove);
+      let target = new Point(this.icon.position.x+xMove,this.icon.position.y+yMove);
       this.icon.position.x = target.x;
       this.icon.position.y = target.y;
       if (this.near(closestFood.icon.position)) {
          this.eatFood(closestFood);
       }
       this.health--;
-      this.icon.radius = wolfStartSize *  (this.health/ wolfStartHealth);
-      if (that.health == 0) {
-         that.icon.rotate(180);
-         wolves = wolves.filter(w => w.id !== that.id);
+      if (this.health == 0) {
+         this.icon.rotate(180);
+         let that = this;
+         this.population.splice(this.population.indexOf(this),1);
          setTimeout(() => that.icon.remove(),500);
       }
 
@@ -76,10 +70,10 @@ class Wolf {
    runTurn() {
 
       let that = this;
-      if (food.length < 1) {
+      if (this.food.length < 1) {
          return;
       }
-      let closestFood = food.reduce((ret,a) =>
+      let closestFood = this.food.reduce((ret,a) =>
          dist(a,that) < dist(ret,that)? a : ret
       );
       this.moveTowardFood(closestFood);
@@ -90,10 +84,29 @@ class Wolf {
          (Math.abs(this.icon.position.y - point.y) < 1));
    }
    eatFood(closestFood) {
-      food = food.filter(e => (! this.near(e.icon.position)));
+      this.food.splice(this.food.indexOf(closestFood),1);
       closestFood.icon.remove();
-      this.health = wolfStartHealth;
-      this.icon.radius = wolfStartSize;
+      this.health = this.startHealth;
+   }
+}
+class Wolf extends Animal {
+   constructor() {
+      super('wolf');
+      this.startHealth = $('#wolfStartHealth').val();
+      this.maxSpeed = $('#wolfMaxSpeed').val();
+      this.health = this.startHealth;
+      this.food = rabbits;
+      this.population = wolves;
+   }
+}
+class Rabbit extends Animal {
+   constructor() {
+      super('rabbit');
+      this.startHealth = $('#rabbitStartHealth').val();
+      this.maxSpeed = $('#rabbitMaxSpeed').val();
+      this.health = this.startHealth;
+      this.food = plants;
+      this.population = rabbits;
    }
 }
 
@@ -110,18 +123,18 @@ function runTurn() {
 
    'use strict';
 
-   wolfStartHealth = $('#wolfStartHealth').val();
-   startPopulation =$('#startPopulation').val();
-   startFood = $('#startFood').val();
-   foodSpawnPerTurn = $('#foodSpawnPerTurn').val(); // per turn
-   wolfMaxSpeed = $('#wolfMaxSpeed').val();
+   let startWolfPopulation =$('#startWolfPopulation').val();
+   let startRabbitPopulation =$('#startRabbitPopulation').val();
+   let startPlantPopulation = $('#startPlantPopulation').val();
+   let plantSpawnPerTurn = $('#plantSpawnPerTurn').val(); // per turn
 
    paper.install(window);
    paper.setup(document.getElementById('mainCanvas'));
    paper.view.draw();
 
-   food = spawn(startFood,Food);
-   wolves = spawn(startPopulation,Wolf);
+   plants.push(... spawn(startPlantPopulation,Plant));
+   rabbits.push(... spawn(startRabbitPopulation,Rabbit));
+   wolves.push(... spawn(startWolfPopulation,Wolf));
    // let special = wolves[5];
    // special.getMoveDist = () => 10;
    // special.icon.fillColor = 'blue';
@@ -132,14 +145,19 @@ function runTurn() {
       if(i===2) {
          i=0;
       }
+
+      for (let i=0;i<rabbits.length;i++) {
+         rabbits[i].runTurn();
+      }
       for (let i=0;i<wolves.length;i++) {
          wolves[i].runTurn();
       }
-      if (Math.random() < (.05 * foodSpawnPerTurn)) {
-         spawn(1,Food).map(e => food.push(e));
+      if (Math.random() < (.05 * plantSpawnPerTurn)) {
+         spawn(1,Plant).map(e => plants.push(e));
       }
       $('#numWolves').text(wolves.length);
-      $('#numFood').text(food.length);
+      $('#numRabbits').text(rabbits.length);
+      $('#numPlants').text(plants.length);
    };
    paper.view.draw();
 }
