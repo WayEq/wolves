@@ -73,10 +73,17 @@ class Animal {
       if (this.food.length < 1) {
          return;
       }
-      let closestFood = this.food.reduce((ret,a) =>
-         dist(a,that) < dist(ret,that)? a : ret
-      );
-      this.moveTowardFood(closestFood);
+      let closestFood = this.food.reduce(function (ret,a) {
+         let d = dist(a,that);
+         //console.log('d: ' + d + ' ret: ' + ret);
+         if (d < ret.dist) {
+            let r = {val: a, dist: d};
+            //console.log('returning: ' + r);
+            return r;
+         }
+         return ret;
+      },{val: null, dist: Infinity});
+      this.moveTowardFood(closestFood.val);
 
    }
    near(point) {
@@ -102,6 +109,8 @@ class Wolf extends Animal {
 class Rabbit extends Animal {
    constructor(x,y) {
       super('rabbit',x,y);
+
+      this.icon.transform(new Matrix(-1,0,0,1,this.icon.position.x*2,0));
       this.startHealth = $('#rabbitStartHealth').val();
       this.maxSpeed = $('#rabbitMaxSpeed').val();
       this.health = this.startHealth;
