@@ -6,7 +6,7 @@ const eslint = require('gulp-eslint');
 gulp.task('watch',function() {
 	gulp.watch(['./public/es6/*.js'],['build']);
 });
-gulp.task('default',['watch']);
+gulp.task('default',['build','watch']);
 gulp.task('build', function() {
 
   // Run ESLint

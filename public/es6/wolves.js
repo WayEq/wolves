@@ -1,4 +1,4 @@
-/*global paper Point Raster Matrix view*/
+/*global paper project Point Raster Matrix view*/
 /*eslint-env jquery, paper.js */
 'use strict';
 
@@ -23,11 +23,11 @@ class Plant {
 let animalId = 0;
 
 class Animal {
-   constructor(icon) {
+   constructor(icon,x,y) {
       this.id = animalId++;
       this.lastDirection = -1;
-      let x =  Math.floor(Math.random()*document.getElementById('mainCanvas').scrollWidth);
-      let y =  Math.floor(Math.random()*document.getElementById('mainCanvas').scrollHeight);
+      if (! x) { x =  Math.floor(Math.random()*document.getElementById('mainCanvas').scrollWidth); }
+      if (! y) { y =  Math.floor(Math.random()*document.getElementById('mainCanvas').scrollHeight); }
       this.icon = new Raster(icon,x,y);
    }
    getMoveDist() {
@@ -90,8 +90,8 @@ class Animal {
    }
 }
 class Wolf extends Animal {
-   constructor() {
-      super('wolf');
+   constructor(x,y) {
+      super('wolf',x,y);
       this.startHealth = $('#wolfStartHealth').val();
       this.maxSpeed = $('#wolfMaxSpeed').val();
       this.health = this.startHealth;
@@ -100,13 +100,21 @@ class Wolf extends Animal {
    }
 }
 class Rabbit extends Animal {
-   constructor() {
-      super('rabbit');
+   constructor(x,y) {
+      super('rabbit',x,y);
       this.startHealth = $('#rabbitStartHealth').val();
       this.maxSpeed = $('#rabbitMaxSpeed').val();
       this.health = this.startHealth;
       this.food = plants;
       this.population = rabbits;
+   }
+   eatFood(closestFood) {
+      this.food.splice(this.food.indexOf(closestFood),1);
+      closestFood.icon.remove();
+      this.health = this.startHealth;
+      this.icon.position.x += 20;
+      this.icon.position.y += 20;
+      this.population.push(new Rabbit(this.icon.position.x-20,this.icon.position.y-20));
    }
 }
 
@@ -118,7 +126,6 @@ function spawn(num,ctor) {
    return a;
 }
 
-let i=0;
 function runTurn() {
 
    'use strict';
@@ -128,16 +135,16 @@ function runTurn() {
    let startPlantPopulation = $('#startPlantPopulation').val();
    let plantSpawnPerTurn = $('#plantSpawnPerTurn').val(); // per turn
 
-   paper.install(window);
-   paper.setup(document.getElementById('mainCanvas'));
-   paper.view.draw();
-
+   project.activeLayer.removeChildren();
+   plants.length = rabbits.length = wolves.length = 0;
    plants.push(... spawn(startPlantPopulation,Plant));
    rabbits.push(... spawn(startRabbitPopulation,Rabbit));
    wolves.push(... spawn(startWolfPopulation,Wolf));
    // let special = wolves[5];
    // special.getMoveDist = () => 10;
    // special.icon.fillColor = 'blue';
+
+   let i=0;
    view.onFrame = function(event) {
       if (i++%2 !== 0) {
          return;
@@ -161,3 +168,9 @@ function runTurn() {
    };
    paper.view.draw();
 }
+$(document).ready(function() {
+
+   paper.install(window);
+   paper.setup(document.getElementById('mainCanvas'));
+   paper.view.draw();
+});
