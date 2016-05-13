@@ -1,131 +1,16 @@
-/*global paper project Point Raster Matrix view*/
+/*global view*/
 /*eslint-env jquery, paper.js */
 'use strict';
 
+import {Plant} from './Plant.js';
+import {Wolf}  from './Wolf.js';
+import {Rabbit} from './Rabbit.js';
+let Chart = require('chart.js');
+let Paper = require('paper');
 
-let plants = [];
-let rabbits = [];
-let wolves = [];
-
-function dist(a,b) {
-   return Math.abs(a.icon.position.x - b.icon.position.x) + Math.abs(a.icon.position.y - b.icon.position.y);
-}
-
-class Plant {
-   constructor() {
-
-      this.icon = new Raster('plant.png',Math.floor(Math.random()*document.getElementById('mainCanvas').scrollWidth),
-      Math.floor(Math.random()*document.getElementById('mainCanvas').scrollHeight));
-      this.icon.fillColor = 'black';
-   }
-}
-
-let animalId = 0;
-
-class Animal {
-   constructor(icon,x,y) {
-      this.id = animalId++;
-      this.lastDirection = -1;
-      if (! x) { x =  Math.floor(Math.random()*document.getElementById('mainCanvas').scrollWidth); }
-      if (! y) { y =  Math.floor(Math.random()*document.getElementById('mainCanvas').scrollHeight); }
-      this.icon = new Raster(icon,x,y);
-   }
-   getMoveDist() {
-      return this.maxSpeed * (1 - (this.health / this.startHealth));
-   }
-   moveTowardFood(closestFood) {
-      let vector = new Point(closestFood.icon.position.x - this.icon.position.x,
-                                   closestFood.icon.position.y - this.icon.position.y);
-      let xMove =Math.abs(vector.x) * this.getMoveDist() / (Math.abs(vector.y) + Math.abs(vector.x));
-
-      let direction = 1;
-      if (vector.x < 0) {
-         direction = -1;
-         xMove *= -1;
-      }
-      if (this.lastDirection != direction) {
-         this.icon.transform(new Matrix(-1,0,0,1,this.icon.position.x*2,0));
-      }
-      this.lastDirection = direction;
-
-      xMove = Math.abs(vector.x) - Math.abs(xMove) > 0 ? xMove : vector.x;
-      let yMove = this.getMoveDist() - Math.abs(xMove);
-      yMove =  (vector.y < 0) ? yMove *= -1 : yMove;
-      yMove = Math.abs(vector.y) - Math.abs(yMove) > 0 ? yMove : vector.y;
-      let target = new Point(this.icon.position.x+xMove,this.icon.position.y+yMove);
-      this.icon.position.x = target.x;
-      this.icon.position.y = target.y;
-      if (this.near(closestFood.icon.position)) {
-         this.eatFood(closestFood);
-      }
-      this.health--;
-      if (this.health == 0) {
-         this.icon.rotate(180);
-         let that = this;
-         this.population.splice(this.population.indexOf(this),1);
-         setTimeout(() => that.icon.remove(),500);
-      }
-
-   }
-   runTurn() {
-
-      let that = this;
-      if (this.food.length < 1) {
-         return;
-      }
-      let closestFood = this.food.reduce(function (ret,a) {
-         let d = dist(a,that);
-         //console.log('d: ' + d + ' ret: ' + ret);
-         if (d < ret.dist) {
-            let r = {val: a, dist: d};
-            //console.log('returning: ' + r);
-            return r;
-         }
-         return ret;
-      },{val: null, dist: Infinity});
-      this.moveTowardFood(closestFood.val);
-
-   }
-   near(point) {
-      return ((Math.abs(this.icon.position.x - point.x) < 1) &&
-         (Math.abs(this.icon.position.y - point.y) < 1));
-   }
-   eatFood(closestFood) {
-      this.food.splice(this.food.indexOf(closestFood),1);
-      closestFood.icon.remove();
-      this.health = this.startHealth;
-   }
-}
-class Wolf extends Animal {
-   constructor(x,y) {
-      super('wolf',x,y);
-      this.startHealth = $('#wolfStartHealth').val();
-      this.maxSpeed = $('#wolfMaxSpeed').val();
-      this.health = this.startHealth;
-      this.food = rabbits;
-      this.population = wolves;
-   }
-}
-class Rabbit extends Animal {
-   constructor(x,y) {
-      super('rabbit',x,y);
-
-      this.icon.transform(new Matrix(-1,0,0,1,this.icon.position.x*2,0));
-      this.startHealth = $('#rabbitStartHealth').val();
-      this.maxSpeed = $('#rabbitMaxSpeed').val();
-      this.health = this.startHealth;
-      this.food = plants;
-      this.population = rabbits;
-   }
-   eatFood(closestFood) {
-      this.food.splice(this.food.indexOf(closestFood),1);
-      closestFood.icon.remove();
-      this.health = this.startHealth;
-      this.icon.position.x += 20;
-      this.icon.position.y += 20;
-      this.population.push(new Rabbit(this.icon.position.x-20,this.icon.position.y-20));
-   }
-}
+Plant.population = [];
+Rabbit.population = [];
+Wolf.population = [];
 
 function spawn(num,ctor) {
    let a = [];
@@ -135,51 +20,93 @@ function spawn(num,ctor) {
    return a;
 }
 
-function runTurn() {
+global.runTurn = function() {
 
    'use strict';
-
    let startWolfPopulation =$('#startWolfPopulation').val();
    let startRabbitPopulation =$('#startRabbitPopulation').val();
    let startPlantPopulation = $('#startPlantPopulation').val();
    let plantSpawnPerTurn = $('#plantSpawnPerTurn').val(); // per turn
 
-   project.activeLayer.removeChildren();
-   plants.length = rabbits.length = wolves.length = 0;
-   plants.push(... spawn(startPlantPopulation,Plant));
-   rabbits.push(... spawn(startRabbitPopulation,Rabbit));
-   wolves.push(... spawn(startWolfPopulation,Wolf));
-   // let special = wolves[5];
-   // special.getMoveDist = () => 10;
-   // special.icon.fillColor = 'blue';
+   Paper.project.activeLayer.removeChildren();
+   Plant.population.length = Rabbit.population.length = Wolf.population.length = 0;
+   Plant.population.push(... spawn(startPlantPopulation,Plant));
+   Rabbit.population.push(... spawn(startRabbitPopulation,Rabbit));
+   Wolf.population.push(... spawn(startWolfPopulation,Wolf));
+
+   let plantsLength = Array(10).fill(Plant.population.length);
+   let rabbitsLength = Array(10).fill(Rabbit.population.length);
+   let wolvesLength =Array(10).fill(Wolf.population.length);
+
+
+   let ctx = document.getElementById('populationChart');
+
+   let myChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+         labels: [10,9,8,7,6,5,4,3,2,1],
+         datasets:
+         [
+            {
+               label: 'Wolves',
+               data: wolvesLength,
+               borderColor: '#770000'
+            },
+            {
+               label: 'Rabits',
+               data: rabbitsLength,
+               borderColor: '#000077'
+            },
+            {
+               label: 'Plants',
+               data: plantsLength,
+               borderColor: '#007700'
+            }
+         ]
+      },
+      options: {
+         scales: {
+            yAxes: [{
+               ticks: {
+                  beginAtZero:true
+               }
+            }]
+         }
+      }
+   });
 
    let i=0;
    view.onFrame = function(event) {
-      if (i++%2 !== 0) {
+      if (i%20 === 0 ) {
+         plantsLength.shift();
+         wolvesLength.shift();
+         rabbitsLength.shift();
+         plantsLength.push(Plant.population.length);
+         wolvesLength.push(Wolf.population.length);
+         rabbitsLength.push(Rabbit.population.length);
+         myChart.update();
+      }
+      if (++i%2 !== 0) {
          return;
       }
-      if(i===2) {
-         i=0;
+      for (let i=0;i<Rabbit.population.length;i++) {
+         Rabbit.population[i].runTurn();
       }
-
-      for (let i=0;i<rabbits.length;i++) {
-         rabbits[i].runTurn();
-      }
-      for (let i=0;i<wolves.length;i++) {
-         wolves[i].runTurn();
+      for (let i=0;i<Wolf.population.length;i++) {
+         Wolf.population[i].runTurn();
       }
       if (Math.random() < (.05 * plantSpawnPerTurn)) {
-         spawn(1,Plant).map(e => plants.push(e));
+         spawn(1,Plant).map(e => Plant.population.push(e));
       }
-      $('#numWolves').text(wolves.length);
-      $('#numRabbits').text(rabbits.length);
-      $('#numPlants').text(plants.length);
+
    };
-   paper.view.draw();
-}
+   Paper.view.draw();
+};
 $(document).ready(function() {
 
-   paper.install(window);
-   paper.setup(document.getElementById('mainCanvas'));
-   paper.view.draw();
+   Paper.install(window);
+   Paper.setup(document.getElementById('mainCanvas'));
+   Paper.view.draw();
+
+
 });
