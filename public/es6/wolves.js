@@ -20,14 +20,102 @@ function spawn(num,ctor) {
    return a;
 }
 
+global.adjustStat = function(id) {
+   console.log(id);
+   let bp = $('#buildPoints');
+   let wsh = $('#wolfStartHealth');
+   let wsp = $('#startWolfPopulation');
+   let rsh = $('#rabbitStartHealth');
+   let srp = $('#startRabbitPopulation');
+   let spp = $('#startPlantPopulation');
+   let wms = $('#wolfMaxSpeed');
+   let rms = $('#rabbitMaxSpeed');
+   let available = bp.text();
+   console.log('av: ' + available);
+   switch(id) {
+   case 'wolfStartHealthPlus':
+      if (available < 1) { return; }
+      bp.text(+available - 1);
+      wsh.text(+wsh.text() +1);
+      break;
+   case 'wolfStartHealthMinus':
+      if (wsh.text() < 1) { return; }
+      bp.text(+bp.text() + 1);
+      wsh.text(+wsh.text() - 1);
+      break;
+   case 'startWolfPopulationPlus':
+      if (available < 10) { return; }
+      bp.text(+bp.text() - 10);
+      wsp.text(+wsp.text() + 1);
+      break;
+   case 'startWolfPopulationMinus':
+      if (wsp.text() < 1) { return; }
+      bp.text(+bp.text() + 10);
+      wsp.text(+wsp.text() - 1);
+      break;
+   case 'rabbitStartHealthPlus':
+      if (available < 1) { return; }
+      bp.text(+bp.text() - 1);
+      rsh.text(+rsh.text() + 1);
+      break;
+   case 'rabbitStartHealthMinus':
+      if (rsh.text() <1) {return;}
+      bp.text(+bp.text() + 1);
+      rsh.text(+rsh.text() - 1);
+      break;
+   case 'startRabbitPopulationPlus':
+      if (available < 10) { return; }
+      bp.text(+bp.text() - 10);
+      srp.text(+srp.text() + 1);
+      break;
+   case 'startRabbitPopulationMinus':
+      if (srp.text() <1) {return;}
+      bp.text(+bp.text() + 10);
+      srp.text(+srp.text() - 1);
+      break;
+   case 'startPlantPopulationPlus':
+      if (available < 10) { return; }
+      bp.text(+bp.text() - 10);
+      spp.text(+spp.text() + 1);
+      break;
+   case 'startPlantPopulationMinus':
+      if (spp.text() <1) {return;}
+      bp.text(+bp.text() + 10);
+      spp.text(+spp.text() - 1);
+      break;
+   case 'wolfMaxSpeedPlus':
+      if (available < 200) { return; }
+      bp.text(+bp.text() - 200);
+      wms.text(+wms.text() + 1);
+      break;
+   case 'wolfMaxSpeedMinus':
+      if (wms.text() <1) { return;}
+      bp.text(+bp.text() + 200);
+      wms.text(+wms.text() - 1);
+      break;
+   case 'rabbitMaxSpeedPlus':
+      if (available < 200) { return; }
+      bp.text(+bp.text() - 200);
+      rms.text(+rms.text() + 1);
+      break;
+   case 'rabbitMaxSpeedMinus':
+      if (rms.text() <1) { return;}
+      bp.text(+bp.text() + 200);
+      rms.text(+rms.text() - 1);
+      break;
+   }
+};
+
 global.runTurn = function() {
 
    'use strict';
-   let startWolfPopulation =$('#startWolfPopulation').val();
-   let startRabbitPopulation =$('#startRabbitPopulation').val();
-   let startPlantPopulation = $('#startPlantPopulation').val();
-   let plantSpawnPerTurn = $('#plantSpawnPerTurn').val(); // per turn
+   $('#days').text('0');
+   let startWolfPopulation =$('#startWolfPopulation').text();
+   let startRabbitPopulation =$('#startRabbitPopulation').text();
+   let startPlantPopulation = $('#startPlantPopulation').text();
+   let plantSpawnPerTurn = 2;//$('#plantSpawnPerTurn').text(); // per turn
 
+   console.log(startWolfPopulation);
    Paper.project.activeLayer.removeChildren();
    Plant.population.length = Rabbit.population.length = Wolf.population.length = 0;
    Plant.population.push(... spawn(startPlantPopulation,Plant));
@@ -77,6 +165,10 @@ global.runTurn = function() {
 
    let i=0;
    view.onFrame = function(event) {
+      if (Rabbit.population.length === 0 || Wolf.population.length === 0) {
+         $('#days').text('GAME OVER! Lasted: ' + $('#days').text() + ' days.');
+         view.onFrame = null;
+      }
       if (i%20 === 0 ) {
          plantsLength.shift();
          wolvesLength.shift();
@@ -85,6 +177,7 @@ global.runTurn = function() {
          wolvesLength.push(Wolf.population.length);
          rabbitsLength.push(Rabbit.population.length);
          myChart.update();
+         $('#days').text(+$('#days').text() + 1);
       }
       if (++i%2 !== 0) {
          return;

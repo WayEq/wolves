@@ -1,2 +1,7 @@
 /* Styles go here */
 #mainCanvas {   border: solid 1px black;}
+#populationChart {  width:1200; border: solid 1px black;}
+div.inline
+{
+   display:inline;
+}

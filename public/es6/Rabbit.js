@@ -8,12 +8,11 @@ export class Rabbit extends Animal {
       super('rabbit',x,y);
 
       this.icon.transform(new Matrix(-1,0,0,1,this.icon.position.x*2,0));
-      this.startHealth = $('#rabbitStartHealth').val();
-      this.maxSpeed = $('#rabbitMaxSpeed').val();
+      this.startHealth = $('#rabbitStartHealth').text();
+      this.maxSpeed = $('#rabbitMaxSpeed').text();
       this.health = this.startHealth;
       this.food = Plant.population;
       this.population = Rabbit.population;
-      console.log('this pop: ' + this.population);
    }
    eatFood(closestFood) {
       this.food.splice(this.food.indexOf(closestFood),1);
