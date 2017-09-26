@@ -34,14 +34,14 @@ global.adjustStat = function(id) {
    console.log('av: ' + available);
    switch(id) {
    case 'wolfStartHealthPlus':
-      if (available < 1) { return; }
-      bp.text(+available - 1);
-      wsh.text(+wsh.text() +1);
+      if (available < 10) { return; }
+      bp.text(+available - 10);
+      wsh.text(+wsh.text() +10);
       break;
    case 'wolfStartHealthMinus':
-      if (wsh.text() < 1) { return; }
-      bp.text(+bp.text() + 1);
-      wsh.text(+wsh.text() - 1);
+      if (wsh.text() < 10) { return; }
+      bp.text(+bp.text() + 10);
+      wsh.text(+wsh.text() - 10);
       break;
    case 'startWolfPopulationPlus':
       if (available < 10) { return; }
@@ -54,14 +54,14 @@ global.adjustStat = function(id) {
       wsp.text(+wsp.text() - 1);
       break;
    case 'rabbitStartHealthPlus':
-      if (available < 1) { return; }
-      bp.text(+bp.text() - 1);
-      rsh.text(+rsh.text() + 1);
+      if (available < 10) { return; }
+      bp.text(+bp.text() - 10);
+      rsh.text(+rsh.text() + 10);
       break;
    case 'rabbitStartHealthMinus':
-      if (rsh.text() <1) {return;}
-      bp.text(+bp.text() + 1);
-      rsh.text(+rsh.text() - 1);
+      if (rsh.text() <10) {return;}
+      bp.text(+bp.text() + 10);
+      rsh.text(+rsh.text() - 10);
       break;
    case 'startRabbitPopulationPlus':
       if (available < 10) { return; }
@@ -188,7 +188,7 @@ global.runTurn = function() {
       for (let i=0;i<Wolf.population.length;i++) {
          Wolf.population[i].runTurn();
       }
-      if (Math.random() < (.05 * plantSpawnPerTurn)) {
+      if (Math.random() < (.03 * plantSpawnPerTurn)) {
          spawn(1,Plant).map(e => Plant.population.push(e));
       }
 
